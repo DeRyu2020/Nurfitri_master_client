@@ -117,11 +117,11 @@
 </div>
 
 <div class="top-nav">
-    <span class="brand-title">Nurfitri Makeup Pro</span>
+    <span class="brand-title">Nurfitri Makeup</span>
     <div class="nav-container">
         <button id="tab-klien" class="nav-btn active" onclick="pindahTab('klien')">📋 Jadwal</button>
-        <button id="tab-vendor" class="nav-btn" onclick="pindahTab('vendor')">👥 Vendor</button>
-        <button id="tab-backup" class="nav-btn" onclick="pindahTab('backup')">⚙️ Pengaturan</button>
+        <button id="tab-vendor" class="nav-btn" onclick="pindahTab('vendor')">👥 Data Vendor</button>
+        <button id="tab-backup" class="nav-btn" onclick="pindahTab('backup')">⚙️ Backup/Restore</button>
     </div>
 </div>
 
@@ -155,7 +155,7 @@
 
     <div id="section-vendor" class="content-section">
         <div class="box">
-            <h3 style="margin:0 0 10px 0">Kelola Kolega Vendor</h3>
+            <h3 style="margin:0 0 10px 0">Kelola Vendor</h3>
             <input id="editIdxVendor" type="hidden" value="-1">
             <label>Nama Vendor</label><input id="vNama" type="text">
             <label>Bidang</label><input id="vJenis" type="text">
@@ -287,6 +287,7 @@
             <div class="modal-info"><b>Catatan</b> ${k.catatan || '-'}</div>
             <hr style="border:0; border-top:1px solid #eee; margin:15px 0">
             <div class="modal-info"><b>HUBUNGI VENDOR</b><br>${vHtml || '-'}</div>
+
         `;
         document.getElementById("modalBtnInvoice").onclick = () => cetakInvoice(idxDiKlien);
         document.getElementById("modalBtnEdit").onclick = () => { tutupModal(); siapkanEditKlien(idxDiKlien); };
@@ -334,7 +335,7 @@
                 let htmlGroup = `<div class="month-header">${namaBulan[mIdx]}</div>`;
                 groups[mIdx].forEach(item => {
                     const k = item.data;
-                    htmlGroup += `<div class="card" onclick="bukaRincian(${item.originalIdx})"><b>${k.nama.toUpperCase()}</b><small>📅 ${formatTglIndo(k.tanggal)} | 📍 ${k.lokasi || '-'}</small></div>`;
+                    htmlGroup += `<div class="card" onclick="bukaRincian(${item.originalIdx})"><b>${k.nama.toUpperCase()}</small>📅 ${formatTglIndo(k.tanggal)} | 📍 ${k.lokasi || '-'}</small></div>`;
                 });
                 container.innerHTML += htmlGroup;
             });
