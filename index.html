@@ -150,9 +150,6 @@
             <div id="vTerpilih" style="margin-top:10px"></div>
             <button class="main-button" id="btnSimpanKlien" onclick="simpanKlien()">Simpan Jadwal</button>
         </div>
-        <div style="padding: 0 15px; margin-bottom: 10px;">
-    <input type="text" id="searchInput" onkeyup="filterKlien()" placeholder="🔍 Cari nama klien..." style="margin-bottom: 0; border: 2px solid #007AFF;">
-</div>
         <div id="listKlienGrouped"></div>
     </div>
 
@@ -442,28 +439,6 @@
         window.scrollTo(0,0);
     }
     function hapusKlien(i) { if(confirm("Hapus?")) { klien.splice(i,1); localStorage.setItem("klien", JSON.stringify(klien)); muatData(); } }
-    function filterKlien() {
-    // 1. Ambil kata kunci yang diketik
-    let input = document.getElementById('searchInput');
-    let filter = input.value.toUpperCase();
-    
-    // 2. Ambil semua kartu klien
-    let container = document.getElementById("daftarKlien");
-    let cards = container.getElementsByClassName('card');
-
-    // 3. Loop semua kartu, sembunyikan yang tidak cocok
-    for (let i = 0; i < cards.length; i++) {
-        let nameElement = cards[i].getElementsByTagName("b")[0]; // Mengambil teks di dalam tag <b> (Nama)
-        if (nameElement) {
-            let txtValue = nameElement.textContent || nameElement.innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                cards[i].style.display = ""; // Munculkan
-            } else {
-                cards[i].style.display = "none"; // Sembunyikan
-            }
-        }
-    }
-}
 
     muatData();
     updateSelectVendor();
