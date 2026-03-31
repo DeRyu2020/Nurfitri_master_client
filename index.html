@@ -362,10 +362,17 @@
         }
 
         // Gabungkan Vendor
-        let teksVendor = (k.vendors && k.vendors.length > 0) 
-            ? k.vendors.map(v => `${v.role}: ${v.nama}`).join(", ") 
-            : "-";
-
+        let teksVendor = "";
+if (k.vendors && k.vendors.length > 0) {
+    // Perbaikan: Gunakan v_role dan v_nama agar sesuai dengan data yang tersimpan
+    teksVendor = k.vendors.map(v => {
+        let role = v.v_role || v.role || "Vendor";
+        let nama = v.v_nama || v.nama || "Tanpa Nama";
+        return `${role}: ${nama}`;
+    }).join(", ");
+} else {
+    teksVendor = "-";
+}
         dataTabel.push([
             k.nama || "",
             k.hp || "",
