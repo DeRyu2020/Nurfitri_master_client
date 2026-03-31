@@ -342,19 +342,19 @@
         document.getElementById("listVendor").innerHTML = vendor.map((v, i) => `<div class="card" style="border-left-color: #34c759; cursor: default"><b>${v.nama}</b><br><small>${v.jenis} | ${v.hp}</small><div style="margin-top:10px; text-align:right"><button onclick="editVendor(${i})" style="color:blue; border:none; background:none; font-weight:bold">Edit</button><button onclick="hapusVendor(${i})" style="color:red; border:none; background:none; font-weight:bold; margin-left:15px">Hapus</button></div></div>`).join("");
     }
 
-    function eksporKeExcel() {
+   function eksporKeExcel() {
     if (klien.length === 0) return alert("Belum ada data klien untuk diekspor.");
 
-    // 1. Buat Header Tabel
+    // 1. Header Tabel (Kolom Vendor Terlibat kembali ditambahkan)
     const dataTabel = [
         ["Nama Klien", "WhatsApp", "Tanggal Acara", "Paket", "Total Biaya", "DP Terbayar", "Sisa Pelunasan", "Vendor Terlibat", "Catatan"]
     ];
 
-    // 2. Olah Data Klien satu per satu
+    // 2. Olah Data Klien
     klien.forEach(k => {
         const sisa = (k.nominal || 0) - (k.dp || 0);
         
-        // Format Tanggal: dari YYYY-MM-DD ke DD-MM-YYYY
+        // Format Tanggal: dari yyyy-mm-dd ke dd-mm-yyyy
         let tglIndo = "";
         if (k.tanggal) {
             const p = k.tanggal.split("-");
@@ -362,31 +362,31 @@
             else tglIndo = k.tanggal;
         }
 
-        // --- BAGIAN KRUSIAL: MENGAMBIL DATA VENDOR ---
+        // --- BAGIAN PENYEMPURNAAN VENDOR ---
         let teksVendor = "-";
         if (k.vendors && k.vendors.length > 0) {
+            // Memanggil k.vendors sesuai properti yang tersimpan di file nurfitri.html (v_role dan v_nama)
             teksVendor = k.vendors.map(v => {
-                // Sesuai kode kamu: v_role untuk Bidang, v_nama untuk Nama Vendor
-                let role = v.v_role || "Vendor"; 
-                let nama = v.v_nama || "Tanpa Nama";
-                return `${role}: ${nama}`;
+                let r = v.v_role || "Vendor";
+                let n = v.v_nama || "Tanpa Nama";
+                return `${r}: ${n}`;
             }).join(", ");
         }
 
         dataTabel.push([
             k.nama || "",
-            k.hp ? "'" + k.hp : "", // Petik agar angka 0 di depan nomor WA tidak hilang
+            k.hp ? "'" + k.hp : "", // Agar angka 0 di depan WA tidak hilang
             tglIndo,
             k.paket || "",
-            k.nominal || 0,
-            k.dp || 0,
-            sisa,
-            teksVendor, // Vendor sekarang muncul di sini
+            Number(k.nominal) || 0,
+            Number(k.dp) || 0,
+            Number(sisa) || 0,
+            k.vendors, // Vendor Terlibat masuk di sini
             k.catatan || ""
         ]);
     });
 
-    // 3. Proses Membuat File Excel (Workbook)
+    // 3. Proses Membuat File Excel
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(dataTabel);
 
@@ -396,21 +396,21 @@
         [4, 5, 6].forEach(colIdx => {
             const cellRef = XLSX.utils.encode_cell({r: R, c: colIdx});
             if (ws[cellRef]) {
-                ws[cellRef].t = 'n'; // Tipe Number
-                ws[cellRef].z = '#,##0'; // Format pemisah ribuan
+                ws[cellRef].t = 'n'; 
+                ws[cellRef].z = '#,##0'; 
             }
         });
     }
 
-    // 5. Atur Lebar Kolom agar tidak terpotong
+    // 5. Atur Lebar Kolom (Kolom Vendor diperlebar)
     ws['!cols'] = [
-        {wch: 20}, {wch: 15}, {wch: 15}, {wch: 20}, 
+        {wch: 25}, {wch: 15}, {wch: 15}, {wch: 20}, 
         {wch: 15}, {wch: 15}, {wch: 15}, {wch: 40}, {wch: 30}
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Rekap Klien");
 
-    // 6. Nama file otomatis dengan tanggal hari ini
+    // 6. Simpan File dengan tanggal saat ini
     const namaFile = "Rekap_Nurfitri_" + new Date().toISOString().slice(0,10) + ".xlsx";
     XLSX.writeFile(wb, namaFile);
 }
