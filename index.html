@@ -345,9 +345,9 @@
    function eksporKeExcel() {
     if (klien.length === 0) return alert("Belum ada data klien untuk diekspor.");
 
-    // 1. Header Tabel (Kolom Vendor Terlibat kembali ditambahkan)
+    // 1. Header Tabel (Kolom Vendor sudah dihapus)
     const dataTabel = [
-        ["Nama Klien", "WhatsApp", "Tanggal Acara", "Paket", "Total Biaya", "DP Terbayar", "Sisa Pelunasan", "Vendor Terlibat", "Catatan"]
+        ["Nama Klien", "WhatsApp", "Tanggal Acara", "Paket", "Total Biaya", "DP Terbayar", "Sisa Pelunasan", "Catatan"]
     ];
 
     // 2. Olah Data Klien
@@ -362,17 +362,6 @@
             else tglIndo = k.tanggal;
         }
 
-        // --- BAGIAN PENYEMPURNAAN VENDOR ---
-        let teksVendor = "-";
-        if (k.vendors && k.vendors.length > 0) {
-            // Memanggil k.vendors sesuai properti yang tersimpan di file nurfitri.html (v_role dan v_nama)
-            teksVendor = k.vendors.map(v => {
-                let r = v.v_role || "Vendor";
-                let n = v.v_nama || "Tanpa Nama";
-                return `${r}: ${n}`;
-            }).join(", ");
-        }
-
         dataTabel.push([
             k.nama || "",
             k.hp ? "'" + k.hp : "", // Agar angka 0 di depan WA tidak hilang
@@ -381,7 +370,6 @@
             Number(k.nominal) || 0,
             Number(k.dp) || 0,
             Number(sisa) || 0,
-            k.vendors, // Vendor Terlibat masuk di sini
             k.catatan || ""
         ]);
     });
@@ -402,19 +390,18 @@
         });
     }
 
-    // 5. Atur Lebar Kolom (Kolom Vendor diperlebar)
+    // 5. Atur Lebar Kolom
     ws['!cols'] = [
         {wch: 25}, {wch: 15}, {wch: 15}, {wch: 20}, 
-        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 40}, {wch: 30}
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 40}
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Rekap Klien");
 
-    // 6. Simpan File dengan tanggal saat ini
+    // 6. Simpan File
     const namaFile = "Rekap_Nurfitri_" + new Date().toISOString().slice(0,10) + ".xlsx";
     XLSX.writeFile(wb, namaFile);
 }
-
     function simpanVendor() {
         const n = document.getElementById("vNama").value;
         const idx = document.getElementById("editIdxVendor").value;
