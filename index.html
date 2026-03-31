@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nurfitri Makeup Pro</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <style>
         /* CSS UTAMA APLIKASI */
@@ -126,7 +127,7 @@
 
 <div class="container">
     <div id="section-klien" class="content-section active">
-        <button class="main-button export-btn" onclick="exportKeExcel()">📥 Download Rekap Excel</button>
+        <button class="main-button" onclick="eksporKeExcel()" style="background:#34c759;">📥 Download Rekap Excel</button>
         <div class="box">
             <h3 style="margin:0 0 10px 0">Tambah / Edit Klien</h3>
             <input id="editIdxKlien" type="hidden" value="-1">
@@ -341,19 +342,54 @@
         document.getElementById("listVendor").innerHTML = vendor.map((v, i) => `<div class="card" style="border-left-color: #34c759; cursor: default"><b>${v.nama}</b><br><small>${v.jenis} | ${v.hp}</small><div style="margin-top:10px; text-align:right"><button onclick="editVendor(${i})" style="color:blue; border:none; background:none; font-weight:bold">Edit</button><button onclick="hapusVendor(${i})" style="color:red; border:none; background:none; font-weight:bold; margin-left:15px">Hapus</button></div></div>`).join("");
     }
 
-    function exportKeExcel() {
-        let excelData = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>.num { mso-number-format:"\\#\\,\\#\\#0"; }</style></head><body><table border="1"><tr><th style="background-color:#007AFF; color:white; font-weight:bold;">Tanggal</th><th style="background-color:#007AFF; color:white; font-weight:bold;">Nama Klien</th><th style="background-color:#007AFF; color:white; font-weight:bold;">No HP</th><th style="background-color:#007AFF; color:white; font-weight:bold;">Lokasi</th><th style="background-color:#007AFF; color:white; font-weight:bold;">Paket</th><th style="background-color:#007AFF; color:white; font-weight:bold;">Total Harga</th><th style="background-color:#007AFF; color:white; font-weight:bold;">DP Masuk</th><th style="background-color:#007AFF; color:white; font-weight:bold;">Sisa Tagihan</th><th style="background-color:#007AFF; color:white; font-weight:bold;">Catatan</th><th style="background-color:#007AFF; color:white; font-weight:bold;">Vendors</th></tr>`;
-        klien.forEach(k => {
-            let sisa = (k.nominal||0) - (k.dp||0);
-            excelData += `<tr><td>${formatTglIndo(k.tanggal)}</td><td>${k.nama}</td><td>'${k.hp || "-"}'</td><td>${k.lokasi || "-"}</td><td>${k.paket || "-"}</td><td class="num">${k.nominal}</td><td class="num">${k.dp}</td><td class="num">${sisa}</td><td>${k.catatan || "-"}</td><td>${(k.vendors || []).join(", ")}</td></tr>`;
-        });
-        excelData += `</table></body></html>`;
-        const blob = new Blob([excelData], { type: 'application/vnd.ms-excel' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url; link.download = "Rekap_Nurfitri_Makeup.xls";
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    }
+    function eksporKeExcel() {
+    if (klien.length === 0) return alert("Belum ada data klien.");
+
+    // 1. Susun header kolom (Sekarang ada kolom Vendor)
+    const dataTabel = [
+        ["Nama Klien", "WhatsApp", "Tanggal Acara", "Paket", "Total Biaya", "DP", "Sisa", "Vendor Terlibat", "Catatan"]
+    ];
+
+    // 2. Masukkan data klien ke dalam tabel
+    klien.forEach(k => {
+        const sisa = (k.nominal || 0) - (k.dp || 0);
+        
+        // Gabungkan daftar vendor menjadi satu teks (Contoh: "MUA: Fitri, Foto: Agus")
+        let teksVendor = "";
+        if (k.vendors && k.vendors.length > 0) {
+            teksVendor = k.vendors.map(v => `${v.role}: ${v.nama}`).join(", ");
+        } else {
+            teksVendor = "-";
+        }
+
+        dataTabel.push([
+            k.nama || "",
+            k.hp || "",
+            k.tanggal || "",
+            k.paket || "",
+            k.nominal || 0,
+            k.dp || 0,
+            sisa,
+            teksVendor, // Data vendor masuk ke sini
+            k.catatan || ""
+        ]);
+    });
+
+    // 3. Proses pembuatan file Excel menggunakan SheetJS
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(dataTabel);
+    
+    // Mengatur lebar kolom agar rapi (Opsional)
+    ws['!cols'] = [
+        {wch: 20}, {wch: 15}, {wch: 15}, {wch: 20}, 
+        {wch: 12}, {wch: 12}, {wch: 12}, {wch: 30}, {wch: 25}
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Data Klien");
+
+    // 4. Download file
+    XLSX.writeFile(wb, "Rekap_Nurfitri_Makeup_" + new Date().toISOString().slice(0,10) + ".xlsx");
+}
 
     function simpanVendor() {
         const n = document.getElementById("vNama").value;
