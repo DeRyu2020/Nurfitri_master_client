@@ -343,74 +343,76 @@
     }
 
     function eksporKeExcel() {
-    if (klien.length === 0) return alert("Belum ada data klien.");
+    if (klien.length === 0) return alert("Belum ada data klien untuk diekspor.");
 
-    // 1. Header Kolom
+    // 1. Buat Header Tabel
     const dataTabel = [
-        ["Nama Klien", "WhatsApp", "Tanggal Acara", "Paket", "Total Biaya", "DP", "Sisa", "Vendor Terlibat", "Catatan"]
+        ["Nama Klien", "WhatsApp", "Tanggal Acara", "Paket", "Total Biaya", "DP Terbayar", "Sisa Pelunasan", "Vendor Terlibat", "Catatan"]
     ];
 
-    // 2. Masukkan data dengan pemformatan
+    // 2. Olah Data Klien satu per satu
     klien.forEach(k => {
         const sisa = (k.nominal || 0) - (k.dp || 0);
         
-        // Format Tanggal ke DD-MM-YYYY
+        // Format Tanggal: dari YYYY-MM-DD ke DD-MM-YYYY
         let tglIndo = "";
         if (k.tanggal) {
-            const [y, m, d] = k.tanggal.split("-");
-            tglIndo = `${d}-${m}-${y}`;
+            const p = k.tanggal.split("-");
+            if(p.length === 3) tglIndo = `${p[2]}-${p[1]}-${p[0]}`;
+            else tglIndo = k.tanggal;
         }
 
-        // Gabungkan Vendor
-        let teksVendor = "";
-if (k.vendors && k.vendors.length > 0) {
-    // Perbaikan: Gunakan v_role dan v_nama agar sesuai dengan data yang tersimpan
-    teksVendor = k.vendors.map(v => {
-        let role = v.v_role || v.role || "Vendor";
-        let nama = v.v_nama || v.nama || "Tanpa Nama";
-        return `${role}: ${nama}`;
-    }).join(", ");
-} else {
-    teksVendor = "-";
-}
+        // --- BAGIAN KRUSIAL: MENGAMBIL DATA VENDOR ---
+        let teksVendor = "-";
+        if (k.vendors && k.vendors.length > 0) {
+            teksVendor = k.vendors.map(v => {
+                // Sesuai kode kamu: v_role untuk Bidang, v_nama untuk Nama Vendor
+                let role = v.v_role || "Vendor"; 
+                let nama = v.v_nama || "Tanpa Nama";
+                return `${role}: ${nama}`;
+            }).join(", ");
+        }
+
         dataTabel.push([
             k.nama || "",
-            k.hp || "",
-            tglIndo, // Gunakan tanggal format Indonesia
+            k.hp ? "'" + k.hp : "", // Petik agar angka 0 di depan nomor WA tidak hilang
+            tglIndo,
             k.paket || "",
-            k.nominal || 0, // Biarkan angka polos dulu untuk diproses SheetJS
+            k.nominal || 0,
             k.dp || 0,
             sisa,
-            teksVendor,
+            teksVendor, // Vendor sekarang muncul di sini
             k.catatan || ""
         ]);
     });
 
+    // 3. Proses Membuat File Excel (Workbook)
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(dataTabel);
 
-    // 3. ATUR FORMAT ANGKA (Pemisah Ribuan) & TANGGAL
-    // Kita beritahu Excel kolom E, F, dan G adalah mata uang/angka dengan pemisah
+    // 4. Atur Format Angka (Pemisah Ribuan) untuk Kolom E, F, G (indeks 4, 5, 6)
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        // Kolom E (Total), F (DP), G (Sisa) -> Indeks 4, 5, 6
         [4, 5, 6].forEach(colIdx => {
             const cellRef = XLSX.utils.encode_cell({r: R, c: colIdx});
             if (ws[cellRef]) {
-                ws[cellRef].t = 'n'; // Set tipe ke Number
-                ws[cellRef].z = '#,##0'; // Format pemisah ribuan (1.000)
+                ws[cellRef].t = 'n'; // Tipe Number
+                ws[cellRef].z = '#,##0'; // Format pemisah ribuan
             }
         });
     }
 
-    // Atur Lebar Kolom
+    // 5. Atur Lebar Kolom agar tidak terpotong
     ws['!cols'] = [
         {wch: 20}, {wch: 15}, {wch: 15}, {wch: 20}, 
-        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 30}, {wch: 25}
+        {wch: 15}, {wch: 15}, {wch: 15}, {wch: 40}, {wch: 30}
     ];
 
-    XLSX.utils.book_append_sheet(wb, ws, "Data Klien");
-    XLSX.writeFile(wb, "Rekap_Nurfitri_Makeup.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Klien");
+
+    // 6. Nama file otomatis dengan tanggal hari ini
+    const namaFile = "Rekap_Nurfitri_" + new Date().toISOString().slice(0,10) + ".xlsx";
+    XLSX.writeFile(wb, namaFile);
 }
 
     function simpanVendor() {
