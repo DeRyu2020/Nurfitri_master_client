@@ -69,7 +69,7 @@
 <div id="invoice-print-area"></div>
 
 <div class="top-nav">
-    <span class="brand-title">Nurfitri Makeup Pro</span>
+    <span class="brand-title">Nurfitri Makeup</span>
     <div class="nav-container">
         <div id="tab1" class="nav-btn active" onclick="showSection('inputKlien')">📋 Input & Data Klien</div>
         <div id="tab3" class="nav-btn" onclick="showSection('inputVendor')">👥 Data Vendor</div>
@@ -356,23 +356,55 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
     }
 
     function exportExcel() {
-        if (klien.length === 0) return alert("Tidak ada data");
-        const dataExcel = klien.map(k => {
-            return {
-                "Tanggal": formatTglIndo(k.tanggal), "Nama Klien": k.nama, "WhatsApp": k.hp,
-                "Lokasi": k.lokasi, "Paket": k.paket,
-                "Total (Rp)": k.nominal.toLocaleString('id-ID'),
-                "DP (Rp)": k.dp.toLocaleString('id-ID'),
-                "Sisa (Rp)": (k.nominal - k.dp).toLocaleString('id-ID'),
-                "Catatan": k.catatan
-            };
-        });
-        const ws = XLSX.utils.json_to_sheet(dataExcel);
-        ws['!cols'] = [{ wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 30 }];
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "DataKlien");
-        XLSX.writeFile(wb, `Data_Nurfitri_Makeup_${new Date().getTime()}.xlsx`);
-    }
+    if (klien.length === 0) return alert("Tidak ada data");
+
+    // 1. Definisikan Header Manual agar bisa dikontrol
+    const header = [
+        ["LAPORAN DATA KLIEN - NURFITRI MAKEUP"], // Baris 1: Judul Besar
+        ["Dibuat pada: " + new Date().toLocaleDateString('id-ID')], // Baris 2: Tanggal Laporan
+        [], // Baris 3: Kosong untuk jarak
+        ["TANGGAL", "NAMA KLIEN", "WHATSAPP", "LOKASI", "PAKET", "TOTAL", "DP", "SISA", "CATATAN"] // Baris 4: Header Tabel
+    ];
+
+    // 2. Mapping data klien (mulai dari Baris 5)
+    const dataKlien = klien.map(k => [
+        formatTglIndo(k.tanggal),
+        k.nama,
+        k.hp,
+        k.lokasi,
+        k.paket,
+        k.nominal,
+        k.dp,
+        (k.nominal - k.dp),
+        k.catatan
+    ]);
+
+    // Gabungkan Header dan Data
+    const combinedData = [...header, ...dataKlien];
+
+    // 3. Buat Worksheet
+    const ws = XLSX.utils.aoa_to_sheet(combinedData);
+
+    // 4. Mengatur Jarak Kolom agar Rapat (wch = jumlah karakter)
+    ws['!cols'] = [
+        { wch: 12 }, // Tanggal
+        { wch: 22 }, // Nama
+        { wch: 14 }, // WhatsApp
+        { wch: 20 }, // Lokasi
+        { wch: 20 }, // Paket
+        { wch: 12 }, // Total
+        { wch: 12 }, // DP
+        { wch: 12 }, // Sisa
+        { wch: 30 }  // Catatan
+    ];
+
+    // 5. Simpan File
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "DataKlien");
+    
+    const tglFile = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Laporan_Nurfitri_${tglFile}.xlsx`);
+}
 
     function filterKlien() {
         const kw = document.getElementById("searchKlien").value.toLowerCase();
