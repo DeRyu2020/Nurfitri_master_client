@@ -358,26 +358,35 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
     function exportExcel() {
     if (klien.length === 0) return alert("Tidak ada data");
 
-    // 1. Definisikan Header Manual agar bisa dikontrol
+    // 1. Definisikan Header Manual
     const header = [
-        ["LAPORAN DATA KLIEN - NURFITRI MAKEUP"], // Baris 1: Judul Besar
-        ["Dibuat pada: " + new Date().toLocaleDateString('id-ID')], // Baris 2: Tanggal Laporan
-        [], // Baris 3: Kosong untuk jarak
-        ["TANGGAL", "NAMA KLIEN", "WHATSAPP", "LOKASI", "PAKET", "TOTAL", "DP", "SISA", "CATATAN"] // Baris 4: Header Tabel
+        ["LAPORAN DATA KLIEN - NURFITRI MAKEUP"], // Baris 1
+        ["Dibuat pada: " + new Date().toLocaleDateString('id-ID')], // Baris 2
+        [], // Baris 3
+        ["TANGGAL", "NAMA KLIEN", "WHATSAPP", "LOKASI", "PAKET", "TOTAL", "DP", "SISA", "VENDOR", "CATATAN"] // Baris 4
     ];
 
-    // 2. Mapping data klien (mulai dari Baris 5)
-    const dataKlien = klien.map(k => [
-        formatTglIndo(k.tanggal),
-        k.nama,
-        k.hp,
-        k.lokasi,
-        k.paket,
-        k.nominal,
-        k.dp,
-        (k.nominal - k.dp),
-        k.catatan
-    ]);
+    // 2. Mapping data klien
+    const dataKlien = klien.map(k => {
+        // Menggabungkan Nama Vendor dan Bidangnya dalam kurung
+        // Contoh: "Budi Photo (Fotografer), Siska Decor (Dekorasi)"
+        const vendorLengkap = k.vendors && k.vendors.length > 0 
+            ? k.vendors.map(v => `${v.nama} (${v.bidang})`).join(", ") 
+            : "-";
+
+        return [
+            formatTglIndo(k.tanggal),
+            k.nama,
+            k.hp,
+            k.lokasi,
+            k.paket,
+            k.nominal,
+            k.dp,
+            (k.nominal - k.dp),
+            vendorLengkap, // Kolom Vendor dengan Bidang
+            k.catatan
+        ];
+    });
 
     // Gabungkan Header dan Data
     const combinedData = [...header, ...dataKlien];
@@ -385,7 +394,7 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
     // 3. Buat Worksheet
     const ws = XLSX.utils.aoa_to_sheet(combinedData);
 
-    // 4. Mengatur Jarak Kolom agar Rapat (wch = jumlah karakter)
+    // 4. Mengatur Jarak Kolom (Vendor dibuat lebih lebar karena ada tambahan teks bidang)
     ws['!cols'] = [
         { wch: 12 }, // Tanggal
         { wch: 22 }, // Nama
@@ -395,6 +404,7 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
         { wch: 12 }, // Total
         { wch: 12 }, // DP
         { wch: 12 }, // Sisa
+        { wch: 35 }, // Vendor (Lebih lebar agar muat nama & bidang)
         { wch: 30 }  // Catatan
     ];
 
