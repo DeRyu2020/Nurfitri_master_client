@@ -201,22 +201,9 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
         const b = document.getElementById("v_bidang").value;
         const h = document.getElementById("v_hp").value;
         if(!n || !b) return alert("Nama dan Bidang wajib diisi");
-        
         const data = {nama: n, bidang: b, hp: h};
-        
-        if(editIdx === -1) { 
-            vendor.push(data); 
-        } else { 
-            vendor[editIdx] = data; 
-        }
-        
+        if(editIdx === -1) { vendor.push(data); } else { vendor[editIdx] = data; }
         localStorage.setItem("vendor", JSON.stringify(vendor));
-
-        // SINKRONISASI VENDOR KE CLOUD
-        if (window.simpanVendorKeCloud) {
-            window.simpanVendorKeCloud(vendor);
-        }
-
         resetFormVendor();
         renderVendor();
         updateVendorSelect();
@@ -256,21 +243,8 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
         document.getElementById("daftarVendor").innerHTML = html;
     }
 
-    function hapusVendor(i) { 
-        if(confirm("Hapus vendor?")) { 
-            vendor.splice(i, 1); 
-            localStorage.setItem("vendor", JSON.stringify(vendor)); 
+    function hapusVendor(i) { if(confirm("Hapus vendor?")) { vendor.splice(i, 1); localStorage.setItem("vendor", JSON.stringify(vendor)); renderVendor(); updateVendorSelect(); } }
 
-            // SINKRONISASI HAPUS VENDOR KE CLOUD
-            if (window.simpanVendorKeCloud) {
-                window.simpanVendorKeCloud(vendor);
-            }
-
-            renderVendor(); 
-            updateVendorSelect(); 
-        } 
-    }
-	
     function updateVendorSelect() {
         let html = "<option value=''>-- Klik untuk Pilih Vendor --</option>";
         vendor.forEach((v, i) => { html += `<option value='${i}'>${v.nama} (${v.bidang})</option>`; });
@@ -303,43 +277,26 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
     }
 
     function simpanKlien() {
-    const editIdx = parseInt(document.getElementById("editIdxKlien").value);
-    const data = {
-        nama: document.getElementById("nama").value,
-        hp: document.getElementById("hpKlien").value,
-        tanggal: document.getElementById("tgl").value,
-        lokasi: document.getElementById("lok").value,
-        paket: document.getElementById("pkt").value,
-        nominal: parseInt(document.getElementById("nom").value || 0),
-        dp: parseInt(document.getElementById("dp").value || 0),
-        catatan: document.getElementById("catatan").value,
-        vendors: [...tempVendors]
-    };
-
-    if(!data.nama || !data.tanggal) return alert("Nama dan Tanggal wajib diisi");
-
-    // Masukkan ke variabel 'klien' (Bisa input baru atau edit)
-    if(editIdx === -1) {
-        klien.push(data); 
-    } else {
-        klien[editIdx] = data;
+        const editIdx = parseInt(document.getElementById("editIdxKlien").value);
+        const data = {
+            nama: document.getElementById("nama").value,
+            hp: document.getElementById("hpKlien").value,
+            tanggal: document.getElementById("tgl").value,
+            lokasi: document.getElementById("lok").value,
+            paket: document.getElementById("pkt").value,
+            nominal: parseInt(document.getElementById("nom").value || 0),
+            dp: parseInt(document.getElementById("dp").value || 0),
+            catatan: document.getElementById("catatan").value,
+            vendors: [...tempVendors]
+        };
+        if(!data.nama || !data.tanggal) return alert("Nama dan Tanggal wajib diisi");
+        if(editIdx === -1) klien.push(data); else klien[editIdx] = data;
+        klien.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+        localStorage.setItem("klien", JSON.stringify(klien));
+        alert("Data berhasil disimpan!");
+        resetFormKlien();
+        renderKlien();
     }
-
-    // Urutkan berdasarkan tanggal
-    klien.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
-
-    // 1. Simpan ke browser lokal (seperti biasa)
-    localStorage.setItem("klien", JSON.stringify(klien));
-
-    // 2. SIMPAN KE CLOUD (Kirim seluruh daftar 'klien' yang sudah terupdate/ter-edit)
-    if (window.simpanKeCloud) {
-        window.simpanKeCloud(klien); 
-    }
-
-    alert("Data berhasil disimpan dan disinkronkan ke Cloud!");
-    resetFormKlien();
-    renderKlien();
-}
 
     function resetFormKlien() {
         document.getElementById("editIdxKlien").value = "-1";
@@ -536,119 +493,26 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
     window.print();
 }
 
-    function generateBackup() { 
-    document.getElementById("areaBackup").value = btoa(JSON.stringify({klien, vendors})); 
-}
-
-function copyBackup() { 
-    const area = document.getElementById("areaBackup"); 
-    area.select(); 
-    document.execCommand("copy"); 
-    alert("Kode disalin!"); 
-}
-
-function prosesRestore() { 
-        try { 
-            const d = JSON.parse(atob(document.getElementById("areaRestore").value)); 
-            if(confirm("Restore data?")) { 
-                const listKlien = d.klien || [];
-                const listVendor = d.vendor || [];
-
-                localStorage.setItem("klien", JSON.stringify(listKlien)); 
-                localStorage.setItem("vendor", JSON.stringify(listVendor)); 
-
-                // UPDATE KE CLOUD FIREBASE
-                if (window.simpanKeCloud) window.simpanKeCloud(listKlien);
-                if (window.simpanVendorKeCloud) window.simpanVendorKeCloud(listVendor);
-
-                alert("Restore berhasil!");
-                location.reload(); 
-            } 
-        } catch(e) { 
-            alert("Kode salah"); 
-        } 
+    function generateBackup() { document.getElementById("areaBackup").value = btoa(JSON.stringify({klien, vendor})); }
+    function copyBackup() { const area = document.getElementById("areaBackup"); area.select(); document.execCommand("copy"); alert("Kode disalin!"); }
+    function prosesRestore() { try { const d = JSON.parse(atob(document.getElementById("areaRestore").value)); if(confirm("Restore data?")) { localStorage.setItem("klien", JSON.stringify(d.klien||[])); localStorage.setItem("vendor", JSON.stringify(d.vendor||[])); location.reload(); } } catch(e) { alert("Kode salah"); } }
+    
+    function siapkanEditKlien(i) {
+        const k = klien[i]; document.getElementById("editIdxKlien").value = i;
+        document.getElementById("nama").value = k.nama; document.getElementById("hpKlien").value = k.hp || "";
+        document.getElementById("tgl").value = k.tanggal; document.getElementById("lok").value = k.lokasi;
+        document.getElementById("pkt").value = k.paket || ""; document.getElementById("nom").value = k.nominal;
+        document.getElementById("dp").value = k.dp; document.getElementById("catatan").value = k.catatan || "";
+        updateHelper('nom', 'helpNom'); updateHelper('dp', 'helpDP');
+        tempVendors = k.vendors || []; renderTempVendors();
+        document.getElementById("btnSimpanKlien").innerText = "Update Data Klien";
+        document.getElementById("btnBatalEdit").style.display = "block";
+        document.getElementById("modalDetail").style.display = "none";
+        window.scrollTo(0,0);
     }
+    function hapusKlien(i) { if(confirm("Hapus?")) { klien.splice(i, 1); localStorage.setItem("klien", JSON.stringify(klien)); renderKlien(); document.getElementById("modalDetail").style.display = "none"; } }
 
-function siapkanEditKlien(i) {
-    const k = klien[i]; 
-    document.getElementById("editIdxKlien").value = i;
-    document.getElementById("nama").value = k.nama; 
-    document.getElementById("hpKlien").value = k.hp || "";
-    document.getElementById("tgl").value = k.tanggal; 
-    document.getElementById("lok").value = k.lokasi;
-    document.getElementById("pkt").value = k.paket || ""; 
-    document.getElementById("nom").value = k.nominal;
-    document.getElementById("dp").value = k.dp; 
-    document.getElementById("catatan").value = k.catatan || "";
-    updateHelper('nom', 'helpNom'); 
-    updateHelper('dp', 'helpDP');
-    tempVendors = k.vendors || []; 
-    renderTempVendors();
-    document.getElementById("btnSimpanKlien").innerText = "Update Data Klien";
-    document.getElementById("btnBatalEdit").style.display = "block";
-    document.getElementById("modalDetail").style.display = "none";
-    window.scrollTo(0,0);
-}
-
-function hapusKlien(i) { 
-    if(confirm("Hapus?")) { 
-        klien.splice(i, 1); 
-        localStorage.setItem("klien", JSON.stringify(klien)); 
-
-        // SINKRONISASI HAPUS KE CLOUD
-        if (window.simpanKeCloud) {
-            window.simpanKeCloud(klien); 
-        }
-
-        renderKlien(); 
-        document.getElementById("modalDetail").style.display = "none"; 
-    } 
-}
-
-	<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-4VbANGAx1ZzyvtN2ZxPNYK1u0cpAOj8",
-    authDomain: "project-nurfitri.firebaseapp.com",
-    databaseURL: "https://project-nurfitri-default-rtdb.firebaseio.com",
-    projectId: "project-nurfitri",
-    storageBucket: "project-nurfitri.appspot.com",
-    messagingSenderId: "681801297915",
-    appId: "1:681801297915:web:07U0YmU3ZWEtMTNmNC00ZTgxTlhZDGtNWEwMjU2NDg5MmMy",
-    measurementId: "G-NEFM9L8G3F"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const dataRef = ref(db, "order_makeup");
-  const vendorRef = ref(db, "data_vendor");
-
-  // Definisi Fungsi Kirim
-  window.simpanKeCloud = (data) => set(dataRef, data);
-  window.simpanVendorKeCloud = (data) => set(vendorRef, data);
-
-  // Terima Data Klien
-  onValue(dataRef, (snapshot) => {
-    const dataCloud = snapshot.val();
-    if (dataCloud && Array.isArray(dataCloud)) {
-      klien = dataCloud;
-      if (typeof renderKlien === "function") renderKlien();
-      localStorage.setItem("klien", JSON.stringify(klien));
-    }
-  });
-
-  // Terima Data Vendor
-  onValue(vendorRef, (snapshot) => {
-    const vendorCloud = snapshot.val();
-    if (vendorCloud && Array.isArray(vendorCloud)) {
-      vendor = vendorCloud; 
-      if (typeof renderVendor === "function") renderVendor();
-      if (typeof updateVendorSelect === "function") updateVendorSelect();
-      localStorage.setItem("vendor", JSON.stringify(vendor));
-    }
-  });
+    updateVendorSelect(); renderKlien(); renderVendor();
 </script>
 </body>
 </html>
