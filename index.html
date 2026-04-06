@@ -312,21 +312,29 @@ const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAA
     }
 
     function renderKlien() {
-        let html = ""; let currentMonth = "";
-        klien.forEach((k, i) => {
-            const dateObj = new Date(k.tanggal);
-            const monthName = dateObj.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
-            if(monthName !== currentMonth) { currentMonth = monthName; html += `<div class="month-header">${currentMonth}</div>`; }
-            const sisa = k.nominal - k.dp;
-            html += `<div class="card" onclick="showDetail(${i})">
-                <b>${k.nama}</b><small>${formatTglIndo(k.tanggal)} | ${k.paket || '-'}</small>
-                <div style="margin-top:5px; font-size:13px;" class="${sisa <= 0 ? 'sisa-lunas' : 'sisa-tag'}">
-                    ${sisa <= 0 ? 'LUNAS' : 'Sisa: Rp ' + sisa.toLocaleString('id-ID')}
-                </div>
-            </div>`;
-        });
-        document.getElementById("daftarKlien").innerHTML = html || "<p style='text-align:center; color:#8e8e93;'>Belum ada data klien.</p>";
-    }
+    let html = ""; let currentMonth = "";
+    klien.forEach((k, i) => {
+        const dateObj = new Date(k.tanggal);
+        const monthName = dateObj.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+        if(monthName !== currentMonth) { 
+            currentMonth = monthName; 
+            html += `<div class="month-header">${currentMonth}</div>`; 
+        }
+        
+        const sisa = k.nominal - k.dp;
+        
+        html += `<div class="card" onclick="showDetail(${i})">
+            <b>${k.nama} | <span style="font-weight:normal; color:#555;">${k.lokasi || '-'}</span></b>
+            
+            <small>${formatTglIndo(k.tanggal)} | ${k.paket || '-'}</small>
+            
+            <div style="margin-top:5px; font-size:13px;" class="${sisa <= 0 ? 'sisa-lunas' : 'sisa-tag'}">
+                ${sisa <= 0 ? 'LUNAS' : 'Sisa: Rp ' + sisa.toLocaleString('id-ID')}
+            </div>
+        </div>`;
+    });
+    document.getElementById("daftarKlien").innerHTML = html || "<p style='text-align:center; color:#8e8e93;'>Belum ada data klien.</p>";
+}
 
     function showDetail(i) {
         const k = klien[i]; const sisa = k.nominal - k.dp;
